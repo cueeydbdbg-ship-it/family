@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Family - لوحة الإدارة</title>
+<style>
+:root{--p:#7B2FF7;--k:#E94B9B;--b:#3B3BF0;--g:#F5C56B;--bg:#F6F3FC;--t:#1b1530;--c:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#15101f;--t:#eee;--c:#211a33}}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--t)}
+header{background:linear-gradient(135deg,var(--k),var(--p),var(--b));color:#fff;padding:14px 18px;font-weight:800;font-size:20px}
+nav{display:flex;gap:6px;overflow-x:auto;padding:10px}nav button{white-space:nowrap}
+button{border:0;border-radius:10px;padding:8px 14px;background:var(--p);color:#fff;cursor:pointer;font:inherit}
+button.alt{background:var(--c);color:var(--t);border:1px solid #8884}button.on{background:var(--g);color:#000}
+main{padding:10px 14px}.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;background:var(--c);border-radius:12px}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid #8883;font-size:14px;vertical-align:middle}
+input{padding:6px 8px;border-radius:8px;border:1px solid #8886;background:var(--bg);color:var(--t);font:inherit;max-width:100%}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.card{background:var(--c);border-radius:16px;padding:16px;text-align:center}.card b{display:block;font-size:26px;color:var(--p)}
+#login{max-width:340px;margin:60px auto;display:grid;gap:10px;padding:16px}#err{color:#d33;min-height:1.2em}
+</style></head><body>
+<header>Family · لوحة الإدارة</header>
+<div id="login"><input id="id" placeholder="البريد أو الهاتف"><input id="pw" type="password" placeholder="كلمة المرور"><button id="go">دخول</button><div id="err"></div></div>
+<div id="app" hidden><nav id="nav"></nav><main><div id="msg"></div><div id="view" class="wrap"></div></main></div>
+<script>
+let tok=sessionStorage.getItem('t')||'';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s);
+async function api(m,p,b){const r=await fetch(p,{method:m,headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:b?JSON.stringify(b):undefined});
+  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'خطأ');return d}
+const tbl=(h,rows)=>`<table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${rows.join('')||`<tr><td colspan=${h.length}>لا توجد بيانات</td></tr>`}</table>`;
+const dt=s=>esc(new Date(s.replace(' ','T')+'Z').toLocaleString('ar'));
+const usd=c=>'$'+(c/100).toFixed(2);
+const inp=(f,v,t='text')=>`<input data-f="${f}" type="${t}" value="${esc(v)}" ${t=='number'?'step="any"':''}>`;
+const chk=v=>`<input data-f="active" type="checkbox" ${v?'checked':''}>`;
+const views={
+ stats:async()=>{const s=await api('GET','/admin/stats');
+  return '<div class=cards>'+[['المستخدمون',s.users],['المنشورات',s.posts],['النقاط المباعة',s.points_sold],['قيمة المشتريات',usd(s.revenue_cents)],['الهدايا المرسلة',s.gifts_sent],['سحب معلّق',s.pending_withdrawals]]
+  .map(([a,b])=>`<div class=card><b>${esc(b)}</b>${a}</div>`).join('')+'</div>'},
+ payments:async()=>tbl(['#','المستخدم','المبلغ','النقاط','الوسيلة','الرقم','الحالة','التاريخ','التأكيد'],
+  (await api('GET','/admin/payments')).map(p=>`<tr><td>${p.id}</td><td>${p.user_id}</td><td>${usd(p.amount_cents)} ${esc(p.currency)}</td><td>${p.points}</td><td>${esc(p.method)}</td><td>${esc(p.provider_ref)}</td><td>${esc(p.status)}</td><td>${dt(p.created_at)}</td><td>${p.confirmed_at?dt(p.confirmed_at):'-'}</td></tr>`)),
+ packages:async()=>tbl(['السعر ($)','النقاط','مفعّلة',''],[...(await api('GET','/admin/packages')).map(p=>`<tr data-id="${p.id}"><td>${inp('price',p.price_cents/100,'number')}</td><td>${inp('points',p.points,'number')}</td><td>${chk(p.active)}</td><td><button data-act="savePkg">حفظ</button></td></tr>`),
+  `<tr data-id=""><td>${inp('price','','number')}</td><td>${inp('points','','number')}</td><td></td><td><button data-act="addPkg">إضافة باقة</button></td></tr>`]),
+ gifts:async()=>tbl(['الاسم','رابط الصورة','السعر (نقاط)','مفعّلة',''],[...(await api('GET','/admin/gifts')).map(g=>`<tr data-id="${g.id}"><td>${inp('name',g.name)}</td><td>${inp('image',g.image_url)}</td><td>${inp('price',g.price_points,'number')}</td><td>${chk(g.active)}</td><td><button data-act="saveGift">حفظ</button></td></tr>`),
+  `<tr data-id=""><td>${inp('name','')}</td><td>${inp('image','')}</td><td>${inp('price','','number')}</td><td></td><td><button data-act="addGift">إضافة هدية</button></td></tr>`]),
+ users:async()=>tbl(['#','الاسم','البريد','الهاتف','الدور','التسجيل',''],(await api('GET','/admin/users')).map(u=>`<tr data-id="${u.id}"><td>${u.id}</td><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.phone)}</td><td>${esc(u.role)}</td><td>${dt(u.created_at)}</td><td><button class="alt" data-act="ban" data-v="${u.banned?0:1}">${u.banned?'إلغاء الحظر':'حظر'}</button> <button data-act="credit">إضافة رصيد</button></td></tr>`)),
+ posts:async()=>tbl(['#','الكاتب','النص','التاريخ',''],(await api('GET','/admin/posts')).map(p=>`<tr data-id="${p.id}"><td>${p.id}</td><td>${esc(p.name)}</td><td>${esc(p.body)}</td><td>${dt(p.created_at)}</td><td><button class="alt" data-act="delPost">حذف</button></td></tr>`)),
+ reports:async()=>tbl(['#','المنشور','السبب','الحالة','التاريخ',''],(await api('GET','/admin/reports')).map(r=>`<tr data-id="${r.id}" data-post="${r.post_id}"><td>${r.id}</td><td>${esc(r.post_body??'(محذوف)')}</td><td>${esc(r.reason)}</td><td>${esc(r.status)}</td><td>${dt(r.created_at)}</td><td><button class="alt" data-act="delReported">حذف المنشور</button> <button data-act="resolve">تمت المعالجة</button></td></tr>`)),
+ withdrawals:async()=>tbl(['#','المستخدم','المبلغ','الوسيلة','المستلم','الحالة','التاريخ',''],(await api('GET','/admin/withdrawals')).map(w=>`<tr data-id="${w.id}"><td>${w.id}</td><td>${w.user_id}</td><td>${usd(w.amount_cents)}</td><td>${esc(w.method)}</td><td>${esc(w.recipient)}</td><td>${esc(w.status)}</td><td>${dt(w.created_at)}</td><td><button data-act="wd" data-s="approved">قبول</button> <button class="alt" data-act="wd" data-s="rejected">رفض</button> <button class="alt" data-act="wd" data-s="paid">تم الدفع</button></td></tr>`))
+};
+const names={stats:'الإحصائيات',payments:'الدفعات',packages:'الباقات',gifts:'الهدايا',users:'المستخدمون',posts:'المنشورات',reports:'البلاغات',withdrawals:'السحب'};
+let cur='stats';
+async function show(v){cur=v;$('#msg').textContent='';document.querySelectorAll('#nav button').forEach(b=>b.className=b.dataset.v==v?'on':'alt');
+  try{$('#view').innerHTML=await views[v]()}catch(e){$('#view').textContent=e.message}}
+const val=(tr,f)=>tr.querySelector(`[data-f=${f}]`);
+const actions={
+ savePkg:tr=>api('PUT','/admin/packages/'+tr.dataset.id,{price_cents:Math.round(val(tr,'price').value*100),points:+val(tr,'points').value,active:val(tr,'active').checked?1:0}),
+ addPkg:tr=>api('POST','/admin/packages',{price_cents:Math.round(val(tr,'price').value*100),points:+val(tr,'points').value}),
+ saveGift:tr=>api('PUT','/admin/gifts/'+tr.dataset.id,{name:val(tr,'name').value,image_url:val(tr,'image').value,price_points:+val(tr,'price').value,active:val(tr,'active').checked?1:0}),
+ addGift:tr=>api('POST','/admin/gifts',{name:val(tr,'name').value,image_url:val(tr,'image').value,price_points:+val(tr,'price').value}),
+ credit:tr=>{const a=prompt('المبلغ بالدولار');if(!(a>0))return false;return api('POST',`/admin/users/${tr.dataset.id}/credit`,{amount_cents:Math.round(a*100)})},
+ ban:(tr,b)=>api('PUT',`/admin/users/${tr.dataset.id}/ban`,{banned:+b.dataset.v}),
+ delPost:tr=>confirm('حذف المنشور؟')&&api('DELETE','/admin/posts/'+tr.dataset.id),
+ delReported:tr=>confirm('حذف المنشور المبلّغ عنه؟')&&api('DELETE','/admin/posts/'+tr.dataset.post),
+ resolve:tr=>api('PUT','/admin/reports/'+tr.dataset.id),
+ wd:(tr,b)=>api('PUT','/admin/withdrawals/'+tr.dataset.id,{status:b.dataset.s})
+};
+$('#view').addEventListener('click',async e=>{const b=e.target.closest('button[data-act]');if(!b)return;
+  try{const r=await actions[b.dataset.act](b.closest('tr'),b);if(r!==false){$('#msg').textContent='تم';show(cur)}}catch(x){$('#msg').textContent=x.message}});
+async function start(){$('#login').hidden=true;$('#app').hidden=false;
+  $('#nav').innerHTML=Object.entries(names).map(([k,v])=>`<button class="alt" data-v="${k}">${v}</button>`).join('');
+  $('#nav').onclick=e=>e.target.dataset.v&&show(e.target.dataset.v);show('stats')}
+$('#go').onclick=async()=>{try{const d=await api('POST','/auth/login',{identifier:$('#id').value,password:$('#pw').value});tok=d.token;
+  await api('GET','/admin/stats');sessionStorage.setItem('t',tok);start()}catch(e){$('#err').textContent=e.message==='غير مصرح'?'هذا الحساب ليس مشرفًا':e.message}};
+if(tok)api('GET','/admin/stats').then(start).catch(()=>sessionStorage.removeItem('t'));
+</script></body></html>

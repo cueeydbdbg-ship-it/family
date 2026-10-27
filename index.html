@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Family"><meta name="theme-color" content="#7B2FF7">
+<link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/icon-180.png"><title>Family</title>
+<style>
+:root{--p:#7B2FF7;--k:#E94B9B;--b:#3B3BF0;--g:#F5C56B;--bg:#F6F3FC;--c:#fff;--t:#1b1530;--m:#777;--gr:linear-gradient(135deg,var(--k),var(--p),var(--b))}
+@media(prefers-color-scheme:dark){:root{--bg:#15101f;--c:#211a33;--t:#eee;--m:#aaa}}
+*{box-sizing:border-box}html,body{margin:0}body{font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--t)}
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;background:var(--c)}
+header h1{margin:0;font-size:20px;background:var(--gr);-webkit-background-clip:text;background-clip:text;color:transparent}header a{text-decoration:none;font-size:22px}
+main{padding:12px 12px calc(86px + env(safe-area-inset-bottom));max-width:640px;margin:auto}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--c);padding:6px 0 calc(6px + env(safe-area-inset-bottom));z-index:5;border-top:1px solid #8883}
+nav a{flex:1;text-align:center;font-size:11px;color:var(--m);text-decoration:none}nav a span{display:block;font-size:22px}nav a.on{color:var(--p)}
+nav .plus span{width:44px;height:44px;line-height:44px;margin:auto;border-radius:50%;background:var(--gr);color:#fff}
+.card{background:var(--c);border-radius:16px;padding:12px;margin:0 0 10px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.row>small{margin-inline-start:auto;color:var(--m)}.row a{color:inherit;text-decoration:none}
+button,.btn{border:0;border-radius:12px;padding:9px 14px;background:var(--p);color:#fff!important;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}
+button.alt,.btn.alt{background:#8883;color:var(--t)!important}
+input,textarea,select{width:100%;padding:10px;border-radius:12px;border:1px solid #8885;background:var(--c);color:var(--t);font:inherit;font-size:16px;margin:4px 0}
+.av{border-radius:50%;object-fit:cover;background:var(--p);color:#fff;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.pic{width:100%;border-radius:12px;margin-top:6px}.cm{padding:4px 0;font-size:14px}.c{text-align:center;color:var(--m)}
+.badge{background:var(--k);color:#fff;border-radius:99px;padding:2px 8px;font-size:12px;margin-inline-start:auto}
+.ms{height:calc(100dvh - 270px);min-height:200px;overflow:auto;display:flex;flex-direction:column;gap:4px;padding:6px 0}
+.b{max-width:78%;padding:8px 12px;border-radius:16px;background:var(--c);align-self:flex-end;word-break:break-word}.b.me{background:var(--p);color:#fff;align-self:flex-start}
+.bal{background:var(--gr);color:#fff;border-radius:24px;padding:20px;text-align:center}.bal h1{margin:4px;color:var(--g);font-size:42px}
+.stats,.grid,.grid3{display:grid;gap:8px;margin:10px 0}.stats{grid-template-columns:repeat(2,1fr)}.stats div{background:var(--c);border-radius:14px;padding:10px;text-align:center;font-weight:800;color:var(--p)}.stats small{display:block;color:var(--m);font-weight:400}
+.grid{grid-template-columns:repeat(auto-fill,minmax(105px,1fr))}.grid button{font-size:15px;line-height:1.7}.grid3{grid-template-columns:repeat(3,1fr)}.grid3 img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
+.pk{display:flex;justify-content:space-between;width:100%;margin:4px 0}.pos{color:#1a9a4a}.neg{color:#d33}.cover{height:130px;border-radius:16px;background:var(--gr) center/cover;margin-bottom:8px}
+#auth{min-height:100dvh;display:flex;align-items:center;justify-content:center;background:var(--gr);padding:20px}#auth .box{width:100%;max-width:380px;color:#fff;text-align:center}
+#auth h1{font-size:38px;margin:0 0 14px}#auth button{width:100%;background:var(--g);color:#000!important;font-weight:700}#auth .lk{background:none;color:#fff!important;font-weight:400}
+#toast{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:12px;z-index:9;max-width:90%}
+</style></head><body>
+<div id="auth" hidden></div>
+<div id="app" hidden>
+<header><a href="#profile" id="hav">👤</a><h1>Family</h1><a href="#notif">🔔</a></header>
+<main id="main"></main>
+<nav id="nav"><a href="#feed" data-n="feed"><span>🏠</span>الرئيسية</a><a href="#friends" data-n="friends"><span>👥</span>الأصدقاء</a>
+<a href="#feed" class="plus" id="plus"><span>+</span>&nbsp;</a><a href="#msgs" data-n="msgs"><span>💬</span>الرسائل</a><a href="#wallet" data-n="wallet"><span>👛</span>المحفظة</a></nav>
+</div><div id="toast" hidden></div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let tok=localStorage.getItem('t'),me=null,timer=null,reg=false;
+const toast=m=>{const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)};
+const safe=f=>async(...a)=>{try{await f(...a)}catch(e){toast(e.message)}};
+async function api(m,p,b){const r=await fetch(p,{method:m,headers:{'Content-Type':'application/json',...(tok?{Authorization:'Bearer '+tok}:{})},body:b?JSON.stringify(b):undefined});
+ const d=await r.json().catch(()=>({}));if(r.status===401&&tok)logout();if(!r.ok)throw new Error(d.error||('حدث خطأ - رمز '+r.status));return d}
+const ago=s=>{const t=new Date(s.replace(' ','T')+'Z'),d=(Date.now()-t)/60000;return d<1?'الآن':d<60?`منذ ${Math.floor(d)} دقيقة`:d<1440?(d<120?'منذ ساعة':`منذ ${Math.floor(d/60)} ساعات`):t.toLocaleDateString('ar')};
+const av=(u,s=40)=>u.avatar_url?`<img class=av style="width:${s}px;height:${s}px" src="${esc(u.avatar_url)}">`:`<span class=av style="width:${s}px;height:${s}px">${esc((u.name||'?')[0])}</span>`;
+const pick=()=>new Promise(res=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>{const f=i.files[0];if(!f)return res(null);const im=new Image();
+ im.onload=()=>{const k=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.8).split(',')[1])};
+ im.onerror=()=>res(null);im.src=URL.createObjectURL(f)};i.click()});
+const upload=async d=>(await api('POST','/upload',{mime:'image/jpeg',data:d})).url;
+const EM={'وردة':'🌹','قلب':'❤️','نجمة':'⭐','هدية':'🎁','هدية كبيرة':'🎀'};
+const K={purchase_points:'شراء نقاط',send_gift:'إرسال هدية',receive_gift:'هدية مستلمة',earnings:'أرباح',withdrawal:'سحب',refund:'استرداد'};
+function logout(){tok=null;me=null;localStorage.removeItem('t');location.hash='';safe(render)()}
+const R={};
+async function render(){clearInterval(timer);
+ if(!tok){$('#app').hidden=true;$('#auth').hidden=false;return authView()}
+ $('#auth').hidden=true;$('#app').hidden=false;if(!me)me=await api('GET','/me');
+ $('#hav').innerHTML=av(me,30);const[h,a]=(location.hash||'#feed').slice(1).split('/');
+ document.querySelectorAll('nav a[data-n]').forEach(x=>x.classList.toggle('on',x.dataset.n===h));
+ await(R[h]||R.feed)(a);window.scrollTo(0,0)}
+function authView(){$('#auth').innerHTML=`<div class=box><h1>Family</h1>${reg?'<input id=an placeholder="الاسم">':''}<input id=ai placeholder="البريد الإلكتروني أو رقم الهاتف" autocapitalize=off>
+ <input id=ap type=password placeholder="كلمة المرور (8 أحرف على الأقل)"><button id=ago>${reg?'إنشاء حساب':'تسجيل الدخول'}</button><button class=lk id=asw>${reg?'لدي حساب بالفعل':'إنشاء حساب جديد'}</button></div>`;
+ $('#asw').onclick=()=>{reg=!reg;authView()};
+ $('#ago').onclick=safe(async()=>{const i=$('#ai').value.trim(),p=$('#ap').value;
+  const d=reg?await api('POST','/auth/register',{[i.includes('@')?'email':'phone']:i,password:p,name:$('#an').value.trim()}):await api('POST','/auth/login',{identifier:i,password:p});
+  tok=d.token;localStorage.setItem('t',tok);await render()})}
+R.feed=async()=>{let img=null;
+ $('#main').innerHTML=`<div class=card><textarea id=pt rows=3 placeholder="بماذا تفكر؟"></textarea><div id=pv></div><div class=row><button class=alt id=pi>📷 صورة</button><button id=pp>نشر</button></div></div><div id=posts class=c>جارٍ التحميل…</div>`;
+ $('#pi').onclick=safe(async()=>{const d=await pick();if(d){img=await upload(d);$('#pv').innerHTML=`<img class=pic src="${esc(img)}">`}});
+ $('#pp').onclick=safe(async()=>{const b=$('#pt').value.trim();if(!b&&!img)return;await api('POST','/posts',{body:b,image_url:img});await render()});
+ const ps=await api('GET','/feed');
+ $('#posts').innerHTML=ps.map(p=>`<div class=card><div class=row><a href="#profile/${p.user_id}" class=row>${av(p,36)}<b>${esc(p.name)}</b></a><small>${ago(p.created_at)}</small></div><p>${esc(p.body)}</p>${p.image_url?`<img class=pic src="${esc(p.image_url)}">`:''}<div class=row><button class=alt data-like=${p.id}>❤ ${p.likes}</button><button class=alt data-cm=${p.id}>💬 ${p.comments}</button><button class=alt data-rp=${p.id}>🚩</button></div><div id=c${p.id}></div></div>`).join('')||'لا توجد منشورات بعد. أضف أصدقاء أو انشر أول منشور.';
+ $('#plus').onclick=()=>setTimeout(()=>$('#pt')&&$('#pt').focus(),50)};
+async function comments(id){const el=$('#c'+id);if(el.innerHTML){el.innerHTML='';return}
+ const cs=await api('GET',`/posts/${id}/comments`);
+ el.innerHTML=cs.map(c=>`<div class=cm><b>${esc(c.name)}</b> ${esc(c.body)} <small>${ago(c.created_at)}</small></div>`).join('')+`<div class=row><input id=ci${id} placeholder="اكتب تعليقًا" style="flex:1"><button data-send=${id}>إرسال</button></div>`}
+R.friends=async()=>{const[rq,fr]=await Promise.all([api('GET','/friends/requests'),api('GET','/friends')]);
+ $('#main').innerHTML=`<input id=q placeholder="ابحث عن مستخدم بالاسم ثم اضغط بحث" enterkeyhint=search><div id=sr></div>${rq.length?'<h3>طلبات الصداقة</h3>'+rq.map(r=>`<div class="card row">${av(r)}<b>${esc(r.name)}</b><button data-ok=${r.id}>قبول</button><button class=alt data-no=${r.id}>رفض</button></div>`).join(''):''}<h3>أصدقائي</h3>${fr.map(f=>`<div class="card row"><a href="#profile/${f.id}" class=row>${av(f)}<b>${esc(f.name)}</b></a><a class="btn" href="#chat/${f.id}">مراسلة</a><button class=alt data-rm=${f.id}>حذف</button></div>`).join('')||'<p class=c>لا أصدقاء بعد</p>'}`;
+ $('#q').onchange=safe(async e=>{const r=await api('GET','/users/search?q='+encodeURIComponent(e.target.value.trim()));
+  $('#sr').innerHTML=r.map(u=>`<div class="card row"><a href="#profile/${u.id}" class=row>${av(u)}<b>${esc(u.name)}</b></a><button data-add=${u.id}>إضافة</button></div>`).join('')||'<p class=c>لا نتائج</p>'})};
+R.msgs=async()=>{const[fr,un]=await Promise.all([api('GET','/friends'),api('GET','/messages/unread')]);const u=Object.fromEntries(un.map(x=>[x.from_id,x.n]));
+ $('#main').innerHTML=fr.map(f=>`<a class="card row" href="#chat/${f.id}" style="text-decoration:none;color:inherit">${av(f)}<b>${esc(f.name)}</b>${u[f.id]?`<span class=badge>${u[f.id]}</span>`:''}</a>`).join('')||'<p class=c>أضف أصدقاء لبدء محادثة</p>'};
+R.chat=async id=>{const f=(await api('GET','/users/'+id)).user;
+ $('#main').innerHTML=`<div class=row><b>${esc(f.name)}</b><a class="btn alt" href="#gifts/${id}" style="margin-inline-start:auto">🎁 هدية</a></div><div id=ms class=ms></div><div class=row><input id=mi placeholder="اكتب رسالة" style="flex:1"><button id=mb>إرسال</button></div>`;
+ const load=safe(async()=>{const m=await api('GET','/messages/'+id),box=$('#ms');if(!box)return;box.innerHTML=m.map(x=>`<div class="b ${x.from_id===me.id?'me':''}">${esc(x.body)}</div>`).join('');box.scrollTop=box.scrollHeight});
+ load();timer=setInterval(load,3000);
+ const send=safe(async()=>{const v=$('#mi').value.trim();if(!v)return;$('#mi').value='';await api('POST','/messages/'+id,{body:v});load()});
+ $('#mb').onclick=send;$('#mi').onkeydown=e=>e.key==='Enter'&&send()};
+R.gifts=async id=>{const[g,w]=await Promise.all([api('GET','/gifts'),api('GET','/wallet')]);
+ $('#main').innerHTML=`<p>رصيدك: <b>${w.wallet.points_balance}</b> نقطة</p><div class=grid>${g.map(x=>`<button class=alt data-gift=${x.id} data-to=${id} data-nm="${esc(x.name)}"><span style="font-size:30px">${EM[x.name]||'🎁'}</span><br>${esc(x.name)}<br><b>${x.price_points}</b> نقطة</button>`).join('')}</div>`};
+R.wallet=async()=>{const w=await api('GET','/wallet'),t=w.totals;
+ $('#main').innerHTML=`<div class=bal><small>رصيد النقاط</small><h1>${w.wallet.points_balance}</h1><a class=btn href="#buy" style="background:var(--g);color:#000!important">شراء نقاط</a></div><div class=stats><div>${t.purchased}<small>نقاط مشتراة</small></div><div>${t.spent}<small>نقاط منفقة</small></div><div>${t.gifts_sent}<small>هدايا مرسلة</small></div><div>${t.gifts_received}<small>هدايا مستلمة</small></div></div><h3>السجل</h3>`+
+ (w.transactions.map(x=>`<div class="card row"><span>${K[x.kind]||esc(x.kind)}<br><small>${ago(x.created_at)}</small></span><b class="${x.points>0?'pos':'neg'}" style="margin-inline-start:auto">${x.points?(x.points>0?'+':'')+x.points:''}</b></div>`).join('')||'<p class=c>لا توجد معاملات</p>')};
+R.buy=async()=>{const ps=await api('GET','/packages');
+ $('#main').innerHTML=`<h3>اختر الباقة</h3>`+ps.map(p=>`<button class="alt pk" data-pkg=${p.id}><b>${p.points} نقطة</b><span>$${(p.price_cents/100).toFixed(2)}</span></button>`).join('')+`<h3>وسيلة الدفع</h3><select id=pm><option value=card>بطاقة بنكية (Mastercard)</option><option value=qi>SuperQi / Qi</option><option value=zaincash>ZainCash</option></select>`};
+R.notif=async()=>{const ns=await api('GET','/notifications'),T={friend_request:'أرسل لك طلب صداقة',friend_accepted:'قبل طلب صداقتك',message:'أرسل لك رسالة',like:'أعجب بمنشورك',comment:'علّق على منشورك',gift:'أرسل لك هدية'};
+ $('#main').innerHTML=ns.map(n=>`<div class="card row"><span><b>${esc(n.by_name||'شخص ما')}</b> ${T[n.type]||'إشعار'}</span><small>${ago(n.created_at)}</small></div>`).join('')||'<p class=c>لا توجد إشعارات</p>'};
+R.profile=async id=>{id=id||me.id;const d=await api('GET','/users/'+id),u=d.user,mine=u.id===me.id,ph=d.posts.filter(p=>p.image_url);
+ $('#main').innerHTML=`<div class=cover></div><div class=card><div class=row>${av(u,64)}<div><h2 style="margin:0">${esc(u.name)}</h2><p style="margin:4px 0">${esc(u.bio)}</p></div></div>${mine?`<div class=row><button class=alt id=ea>تغيير الصورة</button><button class=alt id=ec>تغيير الغلاف</button><button class=alt id=ei>تعديل المعلومات</button></div><div class=row><button class=alt id=lo>تسجيل الخروج</button><button class=alt id=del>حذف الحساب</button><a class="btn alt" href="/privacy">الخصوصية</a></div>`:`<div class=row><button data-add=${u.id}>إضافة صديق</button><a class=btn href="#chat/${u.id}">مراسلة</a><a class="btn alt" href="#gifts/${u.id}">🎁 إهداء</a></div>`}</div>
+ ${ph.length?`<h3>الصور</h3><div class=grid3>${ph.map(p=>`<img src="${esc(p.image_url)}">`).join('')}</div>`:''}<h3>الأصدقاء (${d.friends.length})</h3><div class=row>${d.friends.map(f=>`<a href="#profile/${f.id}">${av(f,44)}</a>`).join('')}</div><h3>المنشورات</h3>${d.posts.map(p=>`<div class=card><small>${ago(p.created_at)}</small><p>${esc(p.body)}</p>${p.image_url?`<img class=pic src="${esc(p.image_url)}">`:''}</div>`).join('')||'<p class=c>لا توجد منشورات</p>'}`;
+ if(u.cover_url)$('.cover').style.backgroundImage=`url("${u.cover_url}")`;
+ if(!mine)return;
+ const setImg=f=>safe(async()=>{const x=await pick();if(!x)return;toast('جارٍ الرفع…');await api('PATCH','/me',{[f]:await upload(x)});me=null;await render()});
+ $('#ea').onclick=setImg('avatar_url');$('#ec').onclick=setImg('cover_url');
+ $('#ei').onclick=safe(async()=>{const n=prompt('الاسم',u.name);if(n===null)return;const b=prompt('نبذة عنك',u.bio||'');await api('PATCH','/me',{name:n.trim(),bio:(b||'').trim()});me=null;await render()});
+ $('#lo').onclick=logout;
+ $('#del').onclick=safe(async()=>{const p=prompt('لحذف الحساب نهائيًا أدخل كلمة المرور');if(!p)return;await api('DELETE','/me',{password:p});logout()})};
+document.addEventListener('click',safe(async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+ if(d.like){await api('POST',`/posts/${d.like}/like`);return render()}
+ if(d.cm)return comments(d.cm);
+ if(d.rp){await api('POST',`/posts/${d.rp}/report`,{reason:'بلاغ'});return toast('تم إرسال البلاغ')}
+ if(d.send){const v=$('#ci'+d.send).value.trim();if(!v)return;await api('POST',`/posts/${d.send}/comments`,{body:v});return render()}
+ if(d.ok){await api('POST',`/friends/requests/${d.ok}/accept`);return render()}
+ if(d.no){await api('POST',`/friends/requests/${d.no}/reject`);return render()}
+ if(d.add){await api('POST','/friends/request/'+d.add);return toast('تم إرسال الطلب')}
+ if(d.rm&&confirm('حذف الصديق؟')){await api('DELETE','/friends/'+d.rm);return render()}
+ if(d.gift){if(!confirm(`إرسال ${d.nm}؟ سيُخصم السعر من رصيدك.`))return;
+  try{await api('POST',`/gifts/${d.gift}/send`,{to_id:+d.to});toast('تم إرسال الهدية');return render()}
+  catch(x){toast(x.message);if(x.message.includes('غير كافٍ'))location.hash='#buy';return}}
+ if(d.pkg){const c=await api('POST','/payments/checkout',{package_id:+d.pkg,method:$('#pm').value});
+  if(c.checkout_url){location.href=c.checkout_url;return}
+  if(!confirm('وضع التجربة: لم يُربط مزود الدفع بعد. محاكاة دفع ناجح؟'))return;
+  await api('POST','/dev/confirm/'+c.provider_ref);
+  for(let i=0;i<10;i++){const s=await api('GET','/payments/'+c.provider_ref);if(s.status==='paid'){toast(`تمت إضافة ${s.points} نقطة`);location.hash='#wallet';return}await new Promise(r=>setTimeout(r,1000))}}
+}));
+window.onhashchange=safe(render);safe(render)();
+</script></body></html>

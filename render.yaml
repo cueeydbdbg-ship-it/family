@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: family
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PAYMENT_WEBHOOK_SECRET
+        generateValue: true
+      - key: ALLOW_TEST_PAYMENTS
+        value: "1"
+      - key: WITHDRAWALS_ENABLED
+        value: "1"
+      - key: ADMIN_EMAIL
+        sync: false
